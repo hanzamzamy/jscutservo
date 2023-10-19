@@ -372,7 +372,7 @@ jscut.priv.cam = jscut.priv.cam || {};
 
         var retractGcode =
             '; Retract\r\n' +
-            'M3 S' + safeZ.toFixed(decimal) + retractFeedGcode + '\r\n';
+            'M3 S' + safeZ.toFixed(0) + retractFeedGcode + '\r\n';
 
         var retractForTabGcode =
             '; Retract for tab\r\n' +
@@ -420,7 +420,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                 gcode +=
                     '; Rapid to initial position\r\n' +
                     'G1' + convertPoint(origPath[0]) + rapidFeedGcode + '\r\n' +
-                    'M3 S' + currentZ.toFixed(decimal) + '\r\n';
+                    'M3 S' + currentZ.toFixed(0) + '\r\n';
 
                 var selectedPaths;
                 if (nextZ >= tabZ || useZ)
@@ -471,7 +471,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                             if (!executedRamp)
                                 gcode +=
                                     '; plunge\r\n' +
-                                    'M3 S' + (-selectedZ.toFixed(decimal)) + plungeFeedGcode + '\r\n';
+                                    'M3 S' + Math.abs(selectedZ.toFixed(0)) + plungeFeedGcode + '\r\n';
                         } else if (selectedZ > currentZ) {
                             gcode += retractForTabGcode;
                         }
