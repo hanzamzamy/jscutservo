@@ -115,7 +115,7 @@ function GcodeConversionViewModel(options, miscViewModel, materialViewModel, too
         else
             gcode += "G21         ; Set units to mm\r\n";
         gcode += "G90         ; Absolute positioning\r\n";
-        gcode += "G1 Z" + safeZ + " F" + rapidRate + "      ; Move to clearance level\r\n"
+        gcode += "M3 S" + safeZ + " G4 P" + plungeRate + "      ; Move to clearance level\r\n"
 
         for (var opIndex = 0; opIndex < ops.length; ++opIndex) {
             var op = ops[opIndex];
@@ -151,7 +151,7 @@ function GcodeConversionViewModel(options, miscViewModel, materialViewModel, too
                 safeZ:          safeZ,
                 passDepth:      passDepth,
                 plungeFeed:     plungeRate,
-                retractFeed:    rapidRate,
+                retractFeed:    plungeRate,
                 cutFeed:        cutRate,
                 rapidFeed:      rapidRate,
                 tabGeometry:    tabGeometry,
@@ -162,9 +162,9 @@ function GcodeConversionViewModel(options, miscViewModel, materialViewModel, too
         if (self.returnTo00())
             gcode +=
                 "\r\n; Return to 0,0\r\n" +
-                "G0 X0 Y0 F" + rapidRate + "\r\n";
+                "G0 X0 Y0 F" + rapidRate + "\r\n" +
+		"M3 S" + (-cutDepth) + " G4 P" + plungeRate + "      ; Move to contact\r\n"
 
-        gcode += "M2\r\n";
         self.gcode(gcode);
 
         if (options.profile)

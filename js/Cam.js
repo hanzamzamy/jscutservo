@@ -353,8 +353,8 @@ jscut.priv.cam = jscut.priv.cam || {};
         var botZ = namedArgs.botZ;
         var safeZ = namedArgs.safeZ;
         var passDepth = namedArgs.passDepth;
-        var plungeFeedGcode = ' F' + namedArgs.plungeFeed;
-        var retractFeedGcode = ' F' + namedArgs.retractFeed;
+        var plungeFeedGcode = ' G4 P' + namedArgs.plungeFeed;
+        var retractFeedGcode = ' G4 P' + namedArgs.retractFeed;
         var cutFeedGcode = ' F' + namedArgs.cutFeed;
         var rapidFeedGcode = ' F' + namedArgs.rapidFeed;
         var tabGeometry = namedArgs.tabGeometry;
@@ -372,7 +372,7 @@ jscut.priv.cam = jscut.priv.cam || {};
 
         var retractGcode =
             '; Retract\r\n' +
-            'G1 Z' + safeZ.toFixed(decimal) + rapidFeedGcode + '\r\n';
+            'M3 S' + safeZ.toFixed(decimal) + retractFeedGcode + '\r\n';
 
         var retractForTabGcode =
             '; Retract for tab\r\n' +
@@ -386,8 +386,8 @@ jscut.priv.cam = jscut.priv.cam || {};
             return -p.Y * scale + offsetY;
         }
 
-        function convertPoint(p, useZ) {
-            var result = ' X' + (p.X * scale + offsetX).toFixed(decimal) + ' Y' + (-p.Y * scale + offsetY).toFixed(decimal);
+        function convertPoint(p) {
+            result = ' X' + (p.X * scale + offsetX).toFixed(decimal) + ' Y' + (-p.Y * scale + offsetY).toFixed(decimal);
             if (useZ)
                 result += ' Z' + (p.Z * scale + topZ).toFixed(decimal);
             return result;
@@ -419,8 +419,8 @@ jscut.priv.cam = jscut.priv.cam || {};
                     currentZ = Math.max(finishedZ, tabZ);
                 gcode +=
                     '; Rapid to initial position\r\n' +
-                    'G1' + convertPoint(origPath[0], false) + rapidFeedGcode + '\r\n' +
-                    'G1 Z' + currentZ.toFixed(decimal) + '\r\n';
+                    'G1' + convertPoint(origPath[0]) + rapidFeedGcode + '\r\n' +
+                    'M3 S' + currentZ.toFixed(decimal) + '\r\n';
 
                 var selectedPaths;
                 if (nextZ >= tabZ || useZ)
@@ -460,7 +460,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                                     for (var i = 1; i < rampPath.length; ++i) {
                                         distTravelled += dist(getX(rampPath[i - 1]), getY(rampPath[i - 1]), getX(rampPath[i]), getY(rampPath[i]));
                                         var newZ = currentZ + distTravelled / totalDist * (selectedZ - currentZ);
-                                        gcode += 'G1' + convertPoint(rampPath[i], false) + ' Z' + newZ.toFixed(decimal);
+                                        gcode += 'G1' + convertPoint(rampPath[i]) + ' Z' + newZ.toFixed(decimal);
                                         if (i == 1)
                                             gcode += ' F' + Math.min(totalDist / minPlungeTime, namedArgs.cutFeed).toFixed(decimal) + '\r\n';
                                         else
@@ -471,7 +471,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                             if (!executedRamp)
                                 gcode +=
                                     '; plunge\r\n' +
-                                    'G1 Z' + selectedZ.toFixed(decimal) + plungeFeedGcode + '\r\n';
+                                    'M3 S' + selectedZ.toFixed(decimal) + plungeFeedGcode + '\r\n';
                         } else if (selectedZ > currentZ) {
                             gcode += retractForTabGcode;
                         }
@@ -481,7 +481,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                     gcode += '; cut\r\n';
 
                     for (var i = 1; i < selectedPath.length; ++i) {
-                        gcode += 'G1' + convertPoint(selectedPath[i], useZ);
+                        gcode += 'G1' + convertPoint(selectedPath[i]);
                         if (i == 1)
                             gcode += cutFeedGcode + '\r\n';
                         else
