@@ -471,7 +471,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                             if (!executedRamp)
                                 gcode +=
                                     '; plunge\r\n' +
-                                    'M3 S' + selectedZ.toFixed(decimal) + plungeFeedGcode + '\r\n';
+                                    'M3 S' + (-selectedZ.toFixed(decimal)) + plungeFeedGcode + '\r\n';
                         } else if (selectedZ > currentZ) {
                             gcode += retractForTabGcode;
                         }
