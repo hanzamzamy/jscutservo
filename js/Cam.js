@@ -420,7 +420,7 @@ jscut.priv.cam = jscut.priv.cam || {};
                 gcode +=
                     '; Rapid to initial position\r\n' +
                     'G1' + convertPoint(origPath[0]) + rapidFeedGcode + '\r\n' +
-                    'M3 S' + currentZ.toFixed(0) + '\r\n';
+                    'M3 S' + Math.abs(currentZ.toFixed(0)) + '\r\n';
 
                 var selectedPaths;
                 if (nextZ >= tabZ || useZ)
