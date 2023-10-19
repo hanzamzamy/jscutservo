@@ -162,7 +162,7 @@ function GcodeConversionViewModel(options, miscViewModel, materialViewModel, too
         gcode +=
         	"\r\n; Return to 0,0\r\n" +
                 "G0 X0 Y0 F" + rapidRate + "\r\n" +
-		"M3 S" + (-cutDepth) + " G4 P" + plungeRate + "      ; Move to contact\r\n"
+		"M3 S" + (-cutDepth) + " G4 P" + plungeRate + "      ; Move to contact\r\n";
 
         self.gcode(gcode);
 
