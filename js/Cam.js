@@ -399,29 +399,99 @@ jscut.priv.cam = jscut.priv.cam || {};
             if (origPath.length == 0)
                 continue;
             var separatedPaths = separateTabs(origPath, tabGeometry);
-
+            
             gcode +=
                 '\r\n' +
                 '; Path ' + pathIndex + '\r\n';
 
-            gcode +=
-                '; Rapid to initial position\r\n' +
-                'G1' + convertPoint(origPath[0]) + rapidFeedGcode + '\r\n' +
-                'M3 S' + Math.abs(safeZ.toFixed(0)) + '\r\n';
+            var currentZ = safeZ;
+            var finishedZ = topZ;
+            while (finishedZ > botZ) {
+                var nextZ = Math.max(finishedZ - passDepth, botZ);
+                if (currentZ < safeZ && (!path.safeToClose || tabGeometry.length > 0)) {
+                    gcode += retractGcode;
+                    currentZ = safeZ;
+                }
 
-            gcode +=
-                '; plunge\r\n' +
-                'M3 S' + Math.abs(botZ.toFixed(0)) + plungeFeedGcode + '\r\n';
-
-            gcode += '; cut\r\n';
-
-            for (var i = 1; i < selectedPath.length; ++i) {
-                gcode += 'G1' + convertPoint(selectedPath[i]);
-                if (i == 1)
-                    gcode += cutFeedGcode + '\r\n';
+                if (tabGeometry.length == 0)
+                    currentZ = finishedZ;
                 else
-                    gcode += '\r\n';
-            }
+                    currentZ = Math.max(finishedZ, tabZ);
+                gcode +=
+                    '; Rapid to initial position\r\n' +
+                    'G1' + convertPoint(origPath[0]) + rapidFeedGcode + '\r\n' +
+                    'M3 S' + Math.abs(safeZ.toFixed(0)) + '\r\n';
+
+                var selectedPaths;
+                if (nextZ >= tabZ || useZ)
+                    selectedPaths = [origPath];
+                else
+                    selectedPaths = separatedPaths;
+
+                for (var selectedIndex = 0; selectedIndex < selectedPaths.length; ++selectedIndex) {
+                    var selectedPath = selectedPaths[selectedIndex];
+                    if (selectedPath.length == 0)
+                        continue;
+
+                    if (!useZ) {
+                        var selectedZ;
+                        if (selectedIndex & 1)
+                            selectedZ = tabZ;
+                        else
+                            selectedZ = nextZ;
+
+                        if (selectedZ < currentZ) {
+                            var executedRamp = false;
+                            if (ramp) {
+                                var minPlungeTime = (currentZ - selectedZ) / namedArgs.plungeFeed;
+                                var idealDist = namedArgs.cutFeed * minPlungeTime;
+                                var end;
+                                var totalDist = 0;
+                                for (end = 1; end < selectedPath.length; ++end) {
+                                    if (totalDist > idealDist)
+                                        break;
+                                    totalDist += 2 * dist(getX(selectedPath[end - 1]), getY(selectedPath[end - 1]), getX(selectedPath[end]), getY(selectedPath[end]));
+                                }
+                                if (totalDist > 0) {
+                                    gcode += '; ramp\r\n'
+                                    executedRamp = true;
+                                    var rampPath = selectedPath.slice(0, end).concat(selectedPath.slice(0, end - 1).reverse());
+                                    var distTravelled = 0;
+                                    for (var i = 1; i < rampPath.length; ++i) {
+                                        distTravelled += dist(getX(rampPath[i - 1]), getY(rampPath[i - 1]), getX(rampPath[i]), getY(rampPath[i]));
+                                        var newZ = currentZ + distTravelled / totalDist * (selectedZ - currentZ);
+                                        gcode += 'G1' + convertPoint(rampPath[i]) + ' Z' + newZ.toFixed(decimal);
+                                        if (i == 1)
+                                            gcode += ' F' + Math.min(totalDist / minPlungeTime, namedArgs.cutFeed).toFixed(decimal) + '\r\n';
+                                        else
+                                            gcode += '\r\n';
+                                    }
+                                }
+                            }
+                            if (!executedRamp)
+                                gcode +=
+                                    '; plunge\r\n' +
+                                    'M3 S' + Math.abs(botZ.toFixed(0)) + plungeFeedGcode + '\r\n';
+                        } else if (selectedZ > currentZ) {
+                            gcode += retractForTabGcode;
+                        }
+                        currentZ = selectedZ;
+                    } // !useZ
+
+                    gcode += '; cut\r\n';
+
+                    for (var i = 1; i < selectedPath.length; ++i) {
+                        gcode += 'G1' + convertPoint(selectedPath[i]);
+                        if (i == 1)
+                            gcode += cutFeedGcode + '\r\n';
+                        else
+                            gcode += '\r\n';
+                    }
+                } // selectedIndex
+                finishedZ = nextZ;
+                if (useZ)
+                    break;
+            } // while (finishedZ > botZ)
 
             gcode += retractGcode;
         } // pathIndex
