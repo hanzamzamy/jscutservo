@@ -353,8 +353,8 @@ jscut.priv.cam = jscut.priv.cam || {};
         var botZ = namedArgs.botZ;
         var safeZ = namedArgs.safeZ;
         var passDepth = namedArgs.passDepth;
-        var plungeFeedGcode = ' G4 P' + namedArgs.plungeFeed;
-        var retractFeedGcode = ' G4 P' + namedArgs.retractFeed;
+        var plungeFeedGcode = ' G4 P' + (namedArgs.plungeFeed).toFixed(0);
+        var retractFeedGcode = ' G4 P' + (namedArgs.retractFeed).toFixed(0);
         var cutFeedGcode = ' F' + namedArgs.cutFeed;
         var rapidFeedGcode = ' F' + namedArgs.rapidFeed;
         var tabGeometry = namedArgs.tabGeometry;
@@ -406,7 +406,6 @@ jscut.priv.cam = jscut.priv.cam || {};
 
             var currentZ = safeZ;
             var finishedZ = topZ;
-            while (finishedZ > botZ) {
                 var nextZ = Math.max(finishedZ - passDepth, botZ);
                 if (currentZ < safeZ && (!path.safeToClose || tabGeometry.length > 0)) {
                     gcode += retractGcode;
@@ -491,7 +490,6 @@ jscut.priv.cam = jscut.priv.cam || {};
                 finishedZ = nextZ;
                 if (useZ)
                     break;
-            } // while (finishedZ > botZ)
 
             gcode += retractGcode;
         } // pathIndex
